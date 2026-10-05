@@ -1,0 +1,21 @@
+Wave 1: 20 lives, 10 gold, 3 towers | build lantern p3; build lantern p5; build tea p9
+Wave 2: 20 lives, 29 gold, 3 towers | upgrade p3
+Wave 3: 20 lives, 60 gold, 4 towers | build drum p6
+Wave 4: 20 lives, 98 gold, 5 towers | build bamboo p10
+Wave 5: 20 lives, 73 gold, 5 towers | upgrade p10; upgrade p6
+Wave 6: 20 lives, 25 gold, 6 towers | upgrade p5; upgrade p3; build bamboo p11
+Wave 7: 20 lives, 97 gold, 6 towers | upgrade p10; upgrade p9
+Wave 8: 20 lives, 49 gold, 7 towers | upgrade p6; upgrade p11; build drum p4
+Wave 9: 20 lives, 44 gold, 8 towers | upgrade p4; build lantern p13; upgrade p5; upgrade p9
+Wave 10: 20 lives, 31 gold, 9 towers | upgrade p11; upgrade p4; build bamboo p8; upgrade p8
+Wave 11: 20 lives, 38 gold, 10 towers | upgrade p8; upgrade p13; upgrade p13; build bamboo p14
+Wave 12: 20 lives, 444 gold, 10 towers | upgrade p14; upgrade p14
+{
+  "status": "won",
+  "waves": 12,
+  "lives": 20,
+  "gold": 1572,
+  "kills": 421,
+  "simulationSeconds": 308.82,
+  "purchases": 30
+}
