@@ -104,6 +104,24 @@ test('selling refunds floor(70% of all spending) exactly once', () => {
   assert.ok(game.build('lantern', 'p1').ok);
 });
 
+test('all tower costs and all three level refunds use exact integer 70% arithmetic', () => {
+  const expected = {
+    lantern: { costs: [70, 75, 115], totals: [70, 145, 260], refunds: [49, 101, 182] },
+    tea: { costs: [90, 90, 130], totals: [90, 180, 310], refunds: [63, 126, 217] },
+    drum: { costs: [120, 115, 165], totals: [120, 235, 400], refunds: [84, 164, 280] },
+    bamboo: { costs: [150, 135, 185], totals: [150, 285, 470], refunds: [105, 199, 329] }
+  };
+  for (const [type, spec] of Object.entries(expected)) {
+    assert.deepEqual([TYPES[type].cost, ...TYPES[type].upgrades], spec.costs);
+    spec.totals.forEach((spent, index) => assert.equal(sellValue({ spent }), spec.refunds[index], `${type} level ${index + 1}`));
+    const game = new Game();
+    const { towerId } = game.build(type, 'p1');
+    assert.equal(game.gold, 240 - spec.costs[0]);
+    assert.equal(game.sell(towerId).refund, spec.refunds[0]);
+    assert.equal(game.gold, 240 - spec.costs[0] + spec.refunds[0]);
+  }
+});
+
 test('start-wave multiclick creates only one spawn queue', () => {
   const game = new Game(); assert.ok(game.startWave().ok);
   const queue = JSON.stringify(game.spawnQueue);

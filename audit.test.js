@@ -31,7 +31,7 @@ test('audit: randomized public actions preserve exact transaction ledger and uni
       const cost=tower?TYPES[tower.type].upgrades[tower.level-1]:null;
       result=game.upgrade(tower?.id); if(result.ok){expected-=cost;purchases+=cost;}
     } else {
-      const amount=tower?Math.floor(tower.spent*.7):0;
+      const amount=tower?Math.floor(tower.spent*7/10):0;
       result=game.sell(tower?.id); if(result.ok){expected+=amount;refunds+=amount;}
     }
     if(!result.ok) assert.equal(clone(game),before,'Rejected action mutated state');
@@ -136,4 +136,62 @@ test('audit: legal 12-wave victory reconciles every purchase, kill bounty and wa
   assert.equal(game.status,'won');assert.equal(game.wave,12);assert.equal(game.lives,20);assert.equal(game.kills,421);assert.equal(purchase,30);
   const terminal=clone(game);for(let i=0;i<200;i++){game.update(.25);game.startWave();game.build('lantern','p1');game.upgrade(game.towers[0].id);game.sell(game.towers[0].id);game.togglePause();}
   assert.equal(clone(game),terminal);assert.equal(game.gold,1572);
+});
+
+import { render, drawTowerIcon } from './render.js';
+function auditedCanvas() {
+  const calls=[];let balance=0;const gradient={addColorStop(){}};
+  const state={globalAlpha:1};
+  const ctx=new Proxy(state,{
+    get(target,key){
+      if(key in target)return target[key];
+      return (...args)=>{
+        calls.push([key,...args]);
+        for(const argument of args.flat())if(typeof argument==='number')assert.ok(Number.isFinite(argument),`${key} received non-finite ${argument}`);
+        if(key==='save')balance++;
+        if(key==='restore'){balance--;assert.ok(balance>=0,'Canvas restore without save');}
+        if(key==='createLinearGradient'||key==='createRadialGradient')return gradient;
+      };
+    },
+    set(target,key,value){if(typeof value==='number')assert.ok(Number.isFinite(value),`${key} set to non-finite value`);target[key]=value;return true;}
+  });
+  return {ctx,calls,get balance(){return balance;}};
+}
+
+test('audit: real renderer accepts every tower, enemy and effect with finite coordinates and balanced canvas state', () => {
+  const canvas=auditedCanvas(),game=new Game();
+  for(const type of Object.keys(TYPES))for(const level of [1,2,3])drawTowerIcon(canvas.ctx,type,100,100,52,level);
+  game.enemies=Object.keys(ENEMIES).map((type,i)=>enemy(type,`render${i}`,300+i*100));
+  for(const [i,type]of Object.keys(TYPES).entries()){const pad=PADS[i];game.towers.push({id:`tower${i}`,type,level:3,padId:pad.id,x:pad.x,y:pad.y});}
+  game.projectiles=game.enemies.slice(0,4).map((target,i)=>shot(Object.keys(TYPES)[i],target));
+  for(const [i,type]of ['hit','death','gold','build','upgrade','sell','leak','wave','splash'].entries())game.effects.push({type,x:300+i*8,y:250,color:'#fff',duration:.4,life:.4,radius:65,text:'+8'});
+  const before=clone(game);
+  for(const buildType of [null,...Object.keys(TYPES)])for(const reducedMotion of [false,true])render(canvas.ctx,game,{selectedTower:game.towers[0].id,hoverPad:'p6',buildType,reducedMotion});
+  assert.equal(canvas.balance,0);assert.equal(clone(game),before,'Rendering must never mutate engine state');
+  assert.ok(canvas.calls.some(([method,text])=>method==='fillText'&&text==='+8'),'Bounty text should be rendered');
+});
+
+test('audit: renderer distinguishes active slow from default full-speed enemies', () => {
+  const game=new Game(),target=enemy('wisp','render',400);game.enemies=[target];
+  const normal=auditedCanvas();render(normal.ctx,game,{buildType:null,reducedMotion:true});
+  const rings=commands=>commands.filter(([name,args])=>name==='setLineDash'&&String(args)==='3,3').length;
+  assert.equal(rings(normal.calls),0,'Full-speed enemy must not show a slow ring');
+  target.slow=.55;target.slowRemaining=2;
+  const slowed=auditedCanvas();render(slowed.ctx,game,{buildType:null,reducedMotion:true});assert.equal(rings(slowed.calls),1);
+});
+
+
+test('audit: a 90-coin tea tower returns exactly 63 coins, with no binary-float rounding loss', () => {
+  const game=new Game(),built=game.build('tea','p1');
+  assert.equal(game.gold,150);assert.equal(game.sell(built.towerId).refund,63);assert.equal(game.gold,213);
+});
+
+test('audit: hovering an empty pad previews a tower only when a build type is selected', () => {
+  const game=new Game(),pad=PADS.find(p=>p.id==='p6');
+  const count=canvas=>canvas.calls.filter(([method,x,y])=>method==='translate'&&x===pad.x&&y===pad.y).length;
+  const baseline=auditedCanvas(),hover=auditedCanvas(),selected=auditedCanvas();
+  render(baseline.ctx,game,{buildType:null,reducedMotion:true});
+  render(hover.ctx,game,{hoverPad:pad.id,buildType:null,reducedMotion:true});
+  render(selected.ctx,game,{hoverPad:pad.id,buildType:'tea',reducedMotion:true});
+  assert.equal(count(hover),count(baseline));assert.equal(count(selected),count(hover)+1);
 });

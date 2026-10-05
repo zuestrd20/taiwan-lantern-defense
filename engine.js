@@ -44,7 +44,7 @@ export function upgradeCost(typeOrTower, level) {
   return Object.hasOwn(TYPES, type) && Number.isInteger(currentLevel) ? TYPES[type].upgrades[currentLevel - 1] ?? null : null;
 }
 export const nextUpgradeCost = upgradeCost;
-export function sellValue(tower) { return tower ? Math.floor(tower.spent * .7) : 0; }
+export function sellValue(tower) { return tower ? Math.floor(tower.spent * 7 / 10) : 0; }
 export const ENEMIES = freeze({
   wisp: { name: '霧靈', description: '慢速的基礎迷霧。', hp: 55, speed: 54, reward: 8, armor: 0, slowResist: 0, leak: 1, color: '#bfbbf9', radius: 13 },
   rusher: { name: '疾風霧', description: '體型輕巧，移動迅速。', hp: 45, speed: 96, reward: 9, armor: 0, slowResist: .05, leak: 1, color: '#f5b0ce', radius: 11 },

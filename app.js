@@ -20,7 +20,7 @@ for(const button of $('tower-shop').children){const type=button.dataset.type;but
 for(const button of $('pad-buttons').children){const tower=game.towers.find(t=>t.padId===button.dataset.pad);button.setAttribute('aria-label',`據點 ${button.dataset.pad.slice(1)}，${tower?`${TYPES[tower.type].name} ${tower.level} 級`:'空地'}`);button.disabled=ended;}
 const signature=JSON.stringify([selectedTower,buildType,game.gold,game.status,game.towers.map(t=>[t.id,t.level])]);if(signature!==selectionSignature){selectionSignature=signature;updateSelection();}
 $('result').hidden=!ended;if(ended){$('result-eyebrow').textContent=game.status==='won'?'THE VALLEY REMEMBERS':'A NEW NIGHT AWAITS';$('result-title').textContent=game.status==='won'?'萬燈破曉，山城無恙。':'霧深了，燈會再亮。';$('result-copy').textContent=game.status==='won'?`十二夜守望完成。你留下 ${game.lives} 盞燈，驅散 ${game.kills} 隻霧靈。謝謝你，替山城留了一條回家的路。`:`守到第 ${game.wave+1} 夜，驅散 ${game.kills} 隻霧靈。試著將天燈放在轉彎處，再用茶香配合鼓陣。`;$('retry').textContent=game.status==='won'?'再守十二夜 →':'重新佈陣 →';}}
-$('start').onclick=()=>{const result=game.startWave();if(result.ok){music.cue('wave');notify(`第 ${game.wave+1} 夜：${WAVES[game.wave].name}。戰鬥中仍可建塔與升級。`);}else notify(result.reason);sync();};
+$('start').onclick=()=>{const result=game.startWave();if(result.ok){music.setPaused(game.paused);music.cue('wave');notify(`第 ${game.wave+1} 夜：${WAVES[game.wave].name}。戰鬥中仍可建塔與升級。`);}else notify(result.reason);sync();};
 function pause(){game.togglePause();music.setPaused(game.paused);sync();}
 $('pause').onclick=pause;$('speed').onclick=()=>{game.setSpeed(game.speed===3?1:game.speed+1);sync();};
 function openDialog(id){wasPaused=game.paused;if(!game.paused&&!['won','lost'].includes(game.status))game.togglePause();music.setPaused(true);$(id).showModal();sync();}
